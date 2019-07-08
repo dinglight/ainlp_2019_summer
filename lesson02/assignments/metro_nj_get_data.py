@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import bs4
 import json
 import re
-from collections import defaultdict
+import networkx as nx
 import pickle
 
 def get_data_sub_links():
@@ -26,11 +26,12 @@ def download_data(url):
         #the text is a json, convert it to python dictionary
         data = json.loads(r.text)
         html = data['articleContent']
-        return html
+        line_name = data['articleTitle']
+        return html, line_name
     except:
         print("error")
 
-def fill_graph(graph, html):
+def fill_graph_by_oneline(graph, html, line_name):
     #use Beautifulsoup to extract data from table
     soup = BeautifulSoup(html, "html.parser")
     for tr in soup.find('tbody').children:
@@ -44,8 +45,7 @@ def fill_graph(graph, html):
                     t = match_obj.group(2)
                     d = int(tds[1].string)
                     #print(f, t, d)
-                    graph[f].append((t, d))
-                    graph[t].append((f, d))
+                    graph.add_edge(f, t, weight=d, line=line_name)
 
 def save_graph(graph):
     f = open('nj_metro.defaultdict', 'wb')
@@ -54,8 +54,8 @@ def save_graph(graph):
 
 if __name__ == '__main__':
     sub_links = get_data_sub_links()
-    graph = defaultdict(list)
+    G = nx.Graph()
     for link in sub_links:
-        html = download_data(link)
-        fill_graph(graph, html)
-    save_graph(graph)
+        html, line_name = download_data(link)
+        fill_graph_by_oneline(G, html, line_name)
+    save_graph(G)
