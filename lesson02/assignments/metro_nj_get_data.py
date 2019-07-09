@@ -31,6 +31,15 @@ def download_data(url):
     except:
         print("error")
 
+def remove_last(text):
+    if text == '南京站':
+        return text
+    if text == '南京南站':
+        return text
+    if text[-1] == '站':
+        return text[:-1]
+    return text
+
 def fill_graph_by_oneline(graph, html, line_name):
     #use Beautifulsoup to extract data from table
     soup = BeautifulSoup(html, "html.parser")
@@ -41,8 +50,8 @@ def fill_graph_by_oneline(graph, html, line_name):
             if tds[0].string:
                 match_obj = re.match(r'(.+)——(.+)', tds[0].string)
                 if match_obj:
-                    f = match_obj.group(1)
-                    t = match_obj.group(2)
+                    f = remove_last(match_obj.group(1))
+                    t = remove_last(match_obj.group(2))
                     d = int(tds[1].string)
                     #print(f, t, d)
                     graph.add_edge(f, t, weight=d, line=line_name)
