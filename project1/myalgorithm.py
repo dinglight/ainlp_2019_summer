@@ -5,6 +5,14 @@ from pyltp import Postagger
 from pyltp import NamedEntityRecognizer
 from pyltp import Parser
 
+def load_saywords():
+    saywords = set()
+    with open('saywords.txt', 'r', encoding='utf8') as f:
+        for line in f:
+            saywords.add(line.rstrip())
+    return saywords
+
+
 def build_parse_child_dict(words, postags, arcs):
     """
     为句子中的每个词语维护一个保存句法依存儿子节点的字典
@@ -48,7 +56,9 @@ def complete_e(words, postags, child_dict_list, word_index):
     return prefix + words[word_index] + postfix
 
 def extract_opinion(document):
-    LTP_DATA_DIR = r'../../tools/ltp_data_v3.4.0/'  # ltp模型目录的路径
+    saywords = load_saywords()
+
+    LTP_DATA_DIR = r'../ltp_data/'  # ltp模型目录的路径
     cws_model_path = os.path.join(LTP_DATA_DIR, 'cws.model')  # 分词模型路径，模型名称为`cws.model`
     segmentor = Segmentor()  # 初始化实例
     segmentor.load(cws_model_path)  # 加载模型
@@ -92,7 +102,8 @@ def extract_opinion(document):
             e1 = complete_e(words, postags, child_dict_list, child_dict['SBV'][0])
             r = words[index]
             e2 = ''.join(words[index+1:])
-            table.append((e1,r,e2))
+            if r in saywords :
+                table.append((e1,r,e2))
 
 
     segmentor.release()  # 释放模型
