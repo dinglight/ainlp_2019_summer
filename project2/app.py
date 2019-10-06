@@ -11,8 +11,11 @@ def input_document():
 def parse_document():
     text = request.forms.task
     size = int(request.forms.size)
+    is_embedding = False
+    if request.forms.embedding == 'on':
+        is_embedding = True
 
-    output = extract_sumarization(text, size)
+    output = extract_sumarization(text, is_embedding, size)
     return output
 
 

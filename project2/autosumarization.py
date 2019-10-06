@@ -1,5 +1,7 @@
 import re
 import networkx
+from scipy.spatial.distance import cosine
+from mysentencevector import wordvector_init, sentence_embedding
 
 def text_to_sentences(text):
     '''split the text to sentences
@@ -12,7 +14,7 @@ def text_to_sentences(text):
     text = re.sub(r'([，。！？])([^”’])', r'\1 \2', text)
     return text.split()
 
-def get_ranked_sentences(sentences, window=3):
+def get_ranked_sentences_by_textrank(sentences, window=3):
     ''' using textrank to ranking the sentences
     Args:
         sentences: a list of string
@@ -30,7 +32,27 @@ def get_ranked_sentences(sentences, window=3):
     ranked_sentences = sorted(ranked_sentences.items(), key=lambda x:x[1], reverse=True)
     return ranked_sentences
 
-def extract_sumarization(text, constraint=200):
+def get_ranked_sentences_by_sentence_embedding(sentences):
+    ''' using sentence_enmbedding cosine distance to ranking the sentences
+        let whole text as a sentence vector, choose vector distance nearest sub sentences
+    Args:
+        sentences: a list of string
+    Return:
+        ranked_sentences: a list of sentences
+    '''
+    if isinstance(sentences, list): text = ''.join(sentences)
+    text_vector = sentence_embedding(text)
+
+    correlations = {}
+    for sentence in sentences:
+        sentence_vector = sentence_embedding(sentence)
+        correlation = cosine(text_vector, sentence_vector)
+        correlations[sentence] = correlation
+
+    ranked_sentences = sorted(correlations.items(), key=lambda x:x[1], reverse=True)
+    return ranked_sentences
+
+def extract_sumarization(text, is_sent_vec, constraint=200):
     ''' generate sumarization of the input text
 
     Args:
@@ -39,7 +61,10 @@ def extract_sumarization(text, constraint=200):
        sumarization: a string
     '''
     sentences = text_to_sentences(text)
-    ranked_sentences = get_ranked_sentences(sentences)
+    if is_sent_vec:
+        ranked_sentences = get_ranked_sentences_by_sentence_embedding(sentences)
+    else:
+        ranked_sentences = get_ranked_sentences_by_textrank(sentences)
     selected_sentences = set()
     current_text = ''
 
@@ -58,3 +83,5 @@ def extract_sumarization(text, constraint=200):
 
     sumarization = ''.join(sumarized_sentences)
     return sumarization
+
+wordvector_init()
